@@ -617,6 +617,7 @@ class ProGenForCausalLM(ProGenPreTrainedModel):
         output_attentions=None,
         output_hidden_states=None,
         return_dict=None,
+        return_final_hiddens=False,
     ):
         r"""
         labels (:obj:`torch.LongTensor` of shape :obj:`(batch_size, sequence_length)`, `optional`):
@@ -666,13 +667,22 @@ class ProGenForCausalLM(ProGenPreTrainedModel):
             output = (lm_logits,) + transformer_outputs[1:]
             return ((loss,) + output) if loss is not None else output
 
-        return CausalLMOutputWithPast(
-            loss=loss,
-            logits=lm_logits,
-            past_key_values=transformer_outputs.past_key_values,
-            hidden_states=transformer_outputs.hidden_states,
-            attentions=transformer_outputs.attentions,
-        )
+        if return_final_hiddens:
+            return CausalLMOutputWithPast(
+                loss=loss,
+                logits=lm_logits,
+                past_key_values=transformer_outputs.past_key_values,
+                hidden_states=transformer_outputs.hidden_states,
+                attentions=transformer_outputs.attentions,
+            ), hidden_states
+        else:
+            return CausalLMOutputWithPast(
+                loss=loss,
+                logits=lm_logits,
+                past_key_values=transformer_outputs.past_key_values,
+                hidden_states=transformer_outputs.hidden_states,
+                attentions=transformer_outputs.attentions,
+            )
 
     @staticmethod
     def _reorder_cache(past: Tuple[Tuple[torch.Tensor]], beam_idx: torch.Tensor) -> Tuple[Tuple[torch.Tensor]]:
